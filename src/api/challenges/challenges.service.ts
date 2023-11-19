@@ -125,6 +125,10 @@ export class ChallengesService extends DefaultService {
         word: params.word
       });
     } catch (error) {
+      if (error.status) {
+        error.message = `${ChallengesService.name}[_createAttempt]:${error.message}`;
+        throw error;
+      }
       throw new Error(`${ChallengesService.name}[_createAttempt]:${error.message}`);
     }
   }
@@ -170,7 +174,11 @@ export class ChallengesService extends DefaultService {
 
       return result;
     } catch (error) {
-      throw new Error(`${ChallengesService.name}[all]:${error.message}`);
+      if (error.status) {
+        error.message = `${ChallengesService.name}[play]:${error.message}`;
+        throw error;
+      }
+      throw new Error(`${ChallengesService.name}[play]:${error.message}`);
     }
   }
 }
