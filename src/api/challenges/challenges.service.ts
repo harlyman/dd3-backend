@@ -35,7 +35,7 @@ export class ChallengesService extends DefaultService {
     }
   }
 
-  private async _create(): Promise<ChallengeEntity> {
+  private async _createChallenge(): Promise<ChallengeEntity> {
     try {
       const word = await this._getWord();
 
@@ -58,7 +58,7 @@ export class ChallengesService extends DefaultService {
 
     let challenge = await query.getOne();
     if (!challenge) {
-      challenge = await this._create();
+      challenge = await this._createChallenge();
     }
     return challenge;
   }
