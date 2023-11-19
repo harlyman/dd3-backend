@@ -1,8 +1,8 @@
 import { readFileSync } from 'fs';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class Setup1700352465413 implements MigrationInterface {
-  name = 'Setup1700352465413';
+export class Setup1700354824884 implements MigrationInterface {
+  name = 'Setup1700354824884';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     const fileContent = readFileSync(`${process.cwd()}/words.txt`, 'utf-8');
@@ -28,7 +28,7 @@ export class Setup1700352465413 implements MigrationInterface {
       `CREATE TABLE "users" ("guid" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "lastname" character varying(50), "email" character varying(50), "search" character varying(200) GENERATED ALWAYS AS (name || COALESCE(lastName, '') || COALESCE(email, '') || username) STORED NOT NULL, "username" character varying(50) NOT NULL, "isActive" boolean NOT NULL DEFAULT 'true', "password" character varying(250) NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "roleGuid" uuid NOT NULL, "createdBy" uuid, "updatedBy" uuid, "deletedBy" uuid, CONSTRAINT "users_uk" UNIQUE ("username"), CONSTRAINT "users_pk" PRIMARY KEY ("guid"))`
     );
     await queryRunner.query(
-      `CREATE TABLE "challenges_users" ("guid" uuid NOT NULL DEFAULT uuid_generate_v4(), "victory" boolean NOT NULL DEFAULT 'false', "userGuid" uuid NOT NULL, CONSTRAINT "challenges_users_pk" PRIMARY KEY ("guid"))`
+      `CREATE TABLE "challenges_users" ("guid" uuid NOT NULL DEFAULT uuid_generate_v4(), "victory" boolean NOT NULL DEFAULT 'false', "challengeGuid" uuid NOT NULL, "userGuid" uuid NOT NULL, CONSTRAINT "challenges_users_pk" PRIMARY KEY ("guid"))`
     );
     await queryRunner.query(
       `CREATE TABLE "attempts" ("guid" uuid NOT NULL DEFAULT uuid_generate_v4(), "word" character varying(30) NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "challengeUserGuid" uuid NOT NULL, CONSTRAINT "attempts_pk" PRIMARY KEY ("guid"))`
@@ -49,7 +49,7 @@ export class Setup1700352465413 implements MigrationInterface {
       `ALTER TABLE "users" ADD CONSTRAINT "users_fk_4" FOREIGN KEY ("deletedBy") REFERENCES "users"("guid") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
     await queryRunner.query(
-      `ALTER TABLE "challenges_users" ADD CONSTRAINT "challenges_users_fk_1" FOREIGN KEY ("userGuid") REFERENCES "challenges"("guid") ON DELETE NO ACTION ON UPDATE NO ACTION`
+      `ALTER TABLE "challenges_users" ADD CONSTRAINT "challenges_users_fk_1" FOREIGN KEY ("challengeGuid") REFERENCES "challenges"("guid") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
     await queryRunner.query(
       `ALTER TABLE "challenges_users" ADD CONSTRAINT "challenges_users_fk_2" FOREIGN KEY ("userGuid") REFERENCES "users"("guid") ON DELETE NO ACTION ON UPDATE NO ACTION`

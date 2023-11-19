@@ -14,7 +14,7 @@ export class ChallengeUserEntity {
   victory: number;
 
   @ManyToOne(() => ChallengeEntity, (challenge) => challenge.challengeUsers, { nullable: false, onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
-  @JoinColumn({ foreignKeyConstraintName: 'challenges_users_fk_1', name: 'userGuid', referencedColumnName: 'guid' })
+  @JoinColumn({ foreignKeyConstraintName: 'challenges_users_fk_1', name: 'challengeGuid', referencedColumnName: 'guid' })
   challenge: ChallengeEntity;
 
   @ManyToOne(() => UserEntity, (user) => user.challenges, { nullable: false, onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
@@ -31,14 +31,12 @@ export class ChallengeUserEntity {
   static getColumnsToShow(): any {
     return {
       guid: true,
-      word: true,
-      beginAt: true,
-      endAt: true
+      victory: true
     };
   }
 
   static getColumnsArrayToShow(params: { alias: string }): string[] {
-    const response = [`${params.alias}.guid`, `${params.alias}.word`, `${params.alias}.beginAt`, `${params.alias}.endAt`];
+    const response = [`${params.alias}.guid`, `${params.alias}.victory`];
     return response;
   }
 }

@@ -2,7 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DefaultService } from 'src/defaults/defatul.service';
+import { AttemptEntity } from 'src/entities/attempt.entity';
 import { ChallengeEntity } from 'src/entities/challenge.entity';
+import { ChallengeUserEntity } from 'src/entities/challengeUser.entity';
+import { UserEntity } from 'src/entities/users.entity';
 import { WordEntity } from 'src/entities/wrod.entity';
 import { Repository } from 'typeorm';
 import { ChallengeBodyDTO, ChallengeResponseDTO } from '../../dto/challenge.dto';
@@ -11,8 +14,12 @@ import { ChallengeBodyDTO, ChallengeResponseDTO } from '../../dto/challenge.dto'
 export class ChallengesService extends DefaultService {
   @InjectRepository(ChallengeEntity)
   private readonly challengeRepository: Repository<ChallengeEntity>;
+  @InjectRepository(ChallengeUserEntity)
+  private readonly challengeUserRepository: Repository<ChallengeUserEntity>;
   @InjectRepository(WordEntity)
   private readonly wordRepository: Repository<WordEntity>;
+  @InjectRepository(UserEntity)
+  private readonly userRepository: Repository<UserEntity>;
   @Inject()
   private readonly configService: ConfigService;
 
@@ -46,26 +53,63 @@ export class ChallengesService extends DefaultService {
         endAt: new Date(now.getTime() + parseInt(this.configService.get<string>('CHALLENGE_TIME')))
       });
     } catch (error) {
-      throw new Error(`${ChallengesService.name}[create]:${error.message}`);
+      throw new Error(`${ChallengesService.name}[_createChallenge]:${error.message}`);
     }
   }
 
   private async _getChallenge(): Promise<ChallengeEntity> {
-    const query = await this.challengeRepository
-      .createQueryBuilder('challenge')
-      .select(ChallengeEntity.getColumnsArrayToShow({ alias: 'challenge' }))
-      .where('challenge.endAt >= :now', { now: new Date() });
+    try {
+      const query = await this.challengeRepository
+        .createQueryBuilder('challenge')
+        .select(ChallengeEntity.getColumnsArrayToShow({ alias: 'challenge' }))
+        .where('challenge.endAt >= :now', { now: new Date() });
 
-    let challenge = await query.getOne();
-    if (!challenge) {
-      challenge = await this._createChallenge();
+      let challenge = await query.getOne();
+      if (!challenge) {
+        challenge = await this._createChallenge();
+      }
+      return challenge;
+    } catch (error) {
+      throw new Error(`${ChallengesService.name}[_getChallenge]:${error.message}`);
     }
-    return challenge;
+  }
+
+  private async _createChallengeUser(params: { challenge: ChallengeEntity; playerGuid: string }): Promise<ChallengeUserEntity> {
+    try {
+      const user = await this.userRepository.findOneBy({ guid: params.playerGuid });
+      return await this.challengeUserRepository.save({
+        challenge: params.challenge,
+        user: user
+      });
+    } catch (error) {
+      throw new Error(`${ChallengesService.name}[_createChallengeUser]:${error.message}`);
+    }
+  }
+
+  private async _getChallengeUser(params: { challenge: ChallengeEntity; playerGuid: string }): Promise<ChallengeUserEntity> {
+    try {
+      const query = await this.challengeUserRepository
+        .createQueryBuilder('challengeuser')
+        .select(ChallengeUserEntity.getColumnsArrayToShow({ alias: 'challengeuser' }))
+        .addSelect(AttemptEntity.getColumnsArrayToShow({ alias: 'attempts' }))
+        .innerJoin('challengeuser.attempts', 'attempts')
+        .where('challengeuser.challenge.guid >= :challengeGuid', { challengeGuid: params.challenge.guid })
+        .where('challengeuser.user.guid >= :playerGuid', { playerGuid: params.playerGuid });
+
+      let challenge = await query.getOne();
+      if (!challenge) {
+        challenge = await this._createChallengeUser(params);
+      }
+      return challenge;
+    } catch (error) {
+      throw new Error(`${ChallengesService.name}[_getChallengeUser]:${error.message}`);
+    }
   }
 
   async play(params: { body: ChallengeBodyDTO; playerGUID: string }): Promise<ChallengeResponseDTO[]> {
     try {
       const challenge = await this._getChallenge();
+      const challengeUsers = await this._getChallengeUser({ challenge: challenge, playerGuid: params.playerGUID });
       return [
         {
           letter: '',
