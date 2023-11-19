@@ -12,12 +12,14 @@ import { ChallengeBodyDTO, ChallengeResponseDTO } from '../../dto/challenge.dto'
 
 @Injectable()
 export class ChallengesService extends DefaultService {
+  @InjectRepository(WordEntity)
+  private readonly wordRepository: Repository<WordEntity>;
   @InjectRepository(ChallengeEntity)
   private readonly challengeRepository: Repository<ChallengeEntity>;
   @InjectRepository(ChallengeUserEntity)
   private readonly challengeUserRepository: Repository<ChallengeUserEntity>;
-  @InjectRepository(WordEntity)
-  private readonly wordRepository: Repository<WordEntity>;
+  @InjectRepository(AttemptEntity)
+  private readonly attemptRepository: Repository<AttemptEntity>;
   @InjectRepository(UserEntity)
   private readonly userRepository: Repository<UserEntity>;
   @Inject()
@@ -92,9 +94,11 @@ export class ChallengesService extends DefaultService {
         .createQueryBuilder('challengeuser')
         .select(ChallengeUserEntity.getColumnsArrayToShow({ alias: 'challengeuser' }))
         .addSelect(AttemptEntity.getColumnsArrayToShow({ alias: 'attempts' }))
-        .innerJoin('challengeuser.attempts', 'attempts')
-        .where('challengeuser.challenge.guid >= :challengeGuid', { challengeGuid: params.challenge.guid })
-        .where('challengeuser.user.guid >= :playerGuid', { playerGuid: params.playerGuid });
+        .leftJoin('challengeuser.attempts', 'attempts')
+        .innerJoin('challengeuser.challenge', 'challenge')
+        .innerJoin('challengeuser.user', 'user')
+        .where('challengeuser.challenge.guid = :challengeGuid', { challengeGuid: params.challenge.guid })
+        .andWhere('challengeuser.user.guid = :playerGuid', { playerGuid: params.playerGuid });
 
       let challenge = await query.getOne();
       if (!challenge) {
@@ -106,10 +110,22 @@ export class ChallengesService extends DefaultService {
     }
   }
 
+  private async _createAttempt(params: { challenge: ChallengeUserEntity; word: string }): Promise<AttemptEntity> {
+    try {
+      return await this.attemptRepository.save({
+        challenge: params.challenge,
+        word: params.word
+      });
+    } catch (error) {
+      throw new Error(`${ChallengesService.name}[_createAttempt]:${error.message}`);
+    }
+  }
+
   async play(params: { body: ChallengeBodyDTO; playerGUID: string }): Promise<ChallengeResponseDTO[]> {
     try {
       const challenge = await this._getChallenge();
-      const challengeUsers = await this._getChallengeUser({ challenge: challenge, playerGuid: params.playerGUID });
+      const challengeUser = await this._getChallengeUser({ challenge: challenge, playerGuid: params.playerGUID });
+      await this._createAttempt({ challenge: challengeUser, word: params.body.user_word });
       return [
         {
           letter: '',
