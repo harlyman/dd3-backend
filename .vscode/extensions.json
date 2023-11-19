@@ -1,0 +1,14 @@
+{
+  "recommendations": ["eamodio.gitlens", "esbenp.prettier-vscode", "formulahendry.auto-rename-tag", "gruntfuggly.todo-tree", "dbaeumer.vscode-eslint"]
+}
+
+/*
+Agregados no teniamos en TNG
+formulahendry.auto-rename-tag
+gruntfuggly.todo-tree
+*/
+/*
+Recomendados no agregados aun
+dbaeumer.vscode-eslint
+stylelint.vscode-stylelint
+*/
