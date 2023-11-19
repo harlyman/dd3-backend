@@ -55,6 +55,7 @@ export class ChallengesService extends DefaultService {
         beginAt: now,
         endAt: new Date(now.getTime() + parseInt(this.configService.get<string>('CHALLENGE_TIME')))
       });
+      await this.wordRepository.update({ guid: word.guid }, { usedAt: now });
       return await this._getChallenge();
     } catch (error) {
       throw new Error(`${ChallengesService.name}[_createChallenge]:${error.message}`);
