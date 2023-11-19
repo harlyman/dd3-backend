@@ -11,7 +11,7 @@ export class ChallengeUserEntity {
   guid?: string;
 
   @Column({ type: 'boolean', nullable: false, default: 'false' })
-  victory: number;
+  victory: boolean;
 
   @ManyToOne(() => ChallengeEntity, (challenge) => challenge.challengeUsers, { nullable: false, onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
   @JoinColumn({ foreignKeyConstraintName: 'challenges_users_fk_1', name: 'challengeGuid', referencedColumnName: 'guid' })
