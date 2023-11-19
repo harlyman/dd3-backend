@@ -1,8 +1,8 @@
 import { HttpStatus, Logger, UseGuards, applyDecorators } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
-import { Roles } from 'src/decorators/roles.decorator';
 import { ResponseDTO } from 'src/dto/api.dto';
 import { RoleEnum } from 'src/entities/roles.entity';
 // eslint-disable-next-line @typescript-eslint/naming-convention
