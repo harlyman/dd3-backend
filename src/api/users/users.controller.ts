@@ -1,8 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, Query, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from 'src/auth/auth.service';
-import { Auth } from 'src/defaults/default.controller';
-import { DefaultWithoutSecurityController } from 'src/defaults/default.without-security.controller';
+import { Auth, DefaultController } from 'src/defaults/default.controller';
 import { ArrayGuidDTO, ResponseDTO, ResponseDataDTO, ResposePaginationDTO } from 'src/dto/api.dto';
 import { UserCreateDTO, UserSearchPaginationDTO, UserUpdateDTO } from 'src/dto/user.dto';
 import { RoleEnum } from 'src/entities/roles.entity';
@@ -12,8 +11,7 @@ import { UsersService } from './users.service';
 
 @Controller('users')
 @ApiTags('Users')
-@ApiResponse({ type: ResponseDTO, status: HttpStatus.INTERNAL_SERVER_ERROR })
-export class UsersController extends DefaultWithoutSecurityController {
+export class UsersController extends DefaultController {
   @Inject(UsersService)
   private readonly userService: UsersService;
   @Inject(AuthService)
@@ -26,12 +24,10 @@ export class UsersController extends DefaultWithoutSecurityController {
   }
 
   @Get()
-  @ApiBearerAuth()
   @Auth(RoleEnum.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ type: ResposePaginationDTO, status: HttpStatus.OK })
-  @ApiResponse({ type: ResponseDTO, status: HttpStatus.UNAUTHORIZED })
   async all(@Query() query: UserSearchPaginationDTO): Promise<ResposePaginationDTO> {
     try {
       return { status: 'success', data: await this.userService.all({ query: query }) };
@@ -41,13 +37,11 @@ export class UsersController extends DefaultWithoutSecurityController {
   }
 
   @Get('whoami')
-  @ApiBearerAuth()
   @Auth(RoleEnum.Admin, RoleEnum.Player)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get Who am I' })
   @ApiResponse({ type: ResponseDataDTO, status: HttpStatus.OK })
   @ApiResponse({ type: ResponseDTO, status: HttpStatus.NOT_FOUND })
-  @ApiResponse({ type: ResponseDTO, status: HttpStatus.UNAUTHORIZED })
   async whoami(@Req() request: { user: UserEntity }): Promise<ResponseDataDTO> {
     try {
       const user = await this.userService.getBy({ query: { guid: request.user.guid } });
@@ -58,13 +52,11 @@ export class UsersController extends DefaultWithoutSecurityController {
   }
 
   @Get(':guid')
-  @ApiBearerAuth()
   @Auth(RoleEnum.Admin, RoleEnum.Player)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get one user by guid' })
   @ApiResponse({ type: ResponseDataDTO, status: HttpStatus.OK })
   @ApiResponse({ type: ResponseDTO, status: HttpStatus.NOT_FOUND })
-  @ApiResponse({ type: ResponseDTO, status: HttpStatus.UNAUTHORIZED })
   async findOne(@Param('guid') guid: string, @Req() request: { user: UserEntity }): Promise<ResponseDataDTO> {
     try {
       const query: { guid: string } = { guid: guid };
@@ -79,13 +71,11 @@ export class UsersController extends DefaultWithoutSecurityController {
   }
 
   @Post()
-  @ApiBearerAuth()
   @Auth(RoleEnum.Admin)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create User' })
   @ApiResponse({ type: ResponseDataDTO, status: HttpStatus.CREATED })
   @ApiResponse({ type: ResponseDTO, status: HttpStatus.CONFLICT })
-  @ApiResponse({ type: ResponseDTO, status: HttpStatus.UNAUTHORIZED })
   async create(@Body() body: UserCreateDTO, @Req() request: { user: UserEntity }): Promise<any> {
     try {
       const user: UserEntity = await this.userService.create({ body: body, createdByGUID: request.user.guid });
@@ -96,14 +86,12 @@ export class UsersController extends DefaultWithoutSecurityController {
   }
 
   @Patch(':guid')
-  @ApiBearerAuth()
   @Auth(RoleEnum.Admin, RoleEnum.Player)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update User' })
   @ApiResponse({ type: ResponseDataDTO, status: HttpStatus.OK })
   @ApiResponse({ type: ResponseDTO, status: HttpStatus.NOT_FOUND })
   @ApiResponse({ type: ResponseDTO, status: HttpStatus.CONFLICT })
-  @ApiResponse({ type: ResponseDTO, status: HttpStatus.UNAUTHORIZED })
   async update(@Param('guid') guid: string, @Body() body: UserUpdateDTO, @Req() request: { user: UserEntity }): Promise<ResponseDataDTO> {
     try {
       const updatedUser = await this.userService.update({ guid: guid, body: body, updatedByGUID: request.user.guid });
@@ -114,12 +102,10 @@ export class UsersController extends DefaultWithoutSecurityController {
   }
 
   @Delete()
-  @ApiBearerAuth()
   @Auth(RoleEnum.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete Users' })
   @ApiResponse({ type: ResponseDTO, status: HttpStatus.CONFLICT })
-  @ApiResponse({ type: ResponseDTO, status: HttpStatus.UNAUTHORIZED })
   async $delete(@Body() body: ArrayGuidDTO, @Req() request: { user: UserEntity }): Promise<ResponseDataDTO> {
     try {
       await this.userService.$delete({ body: body, deletedByGUID: request.user.guid });

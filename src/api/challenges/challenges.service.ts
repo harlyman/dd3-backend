@@ -161,6 +161,7 @@ export class ChallengesService extends DefaultService {
       const challengeUser = await this._getChallengeUser({ challenge: challenge, playerGuid: params.playerGUID });
       await this._createAttempt({ challenge: challengeUser, word: params.body.user_word });
       const result = this._evaluateWord({ challenge: challenge, word: params.body.user_word });
+      this.logger.debug(`word: ${challenge.word.word}`);
 
       let isVictory = true;
       result.forEach((element) => {

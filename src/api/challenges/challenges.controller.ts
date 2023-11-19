@@ -1,7 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Inject, Post, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth, DefaultController } from 'src/defaults/default.controller';
-import { ResponseDTO } from 'src/dto/api.dto';
 import { ChallengeBodyDTO, ChallengeResponseDTO } from 'src/dto/challenge.dto';
 import { RoleEnum } from 'src/entities/roles.entity';
 import { UserEntity } from 'src/entities/users.entity';
@@ -25,11 +24,9 @@ export class ChallengesController extends DefaultController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Play Challenge' })
   @ApiResponse({ type: ChallengeResponseDTO, status: HttpStatus.OK })
-  @ApiResponse({ type: ResponseDTO, status: HttpStatus.UNAUTHORIZED })
-  async play(@Body() body: ChallengeBodyDTO, @Req() request: { user: UserEntity }): Promise<any> {
+  async play(@Body() body: ChallengeBodyDTO, @Req() request: { user: UserEntity }): Promise<ChallengeResponseDTO[]> {
     try {
-      const response: ChallengeResponseDTO[] = await this.challengeService.play({ body: body, playerGUID: request.user.guid });
-      return response;
+      return await this.challengeService.play({ body: body, playerGUID: request.user.guid });
     } catch (error) {
       this.utilsService.throwHTTPException({ controller: ChallengesController, error: error });
     }
