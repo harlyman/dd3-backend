@@ -1,7 +1,7 @@
-import { Controller, Get, HttpCode, HttpStatus, Inject, Param } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Inject, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth, DefaultController } from 'src/defaults/default.controller';
-import { ResponseDataDTO } from 'src/dto/api.dto';
+import { PaginationDTO, ResponseDataDTO, ResposeResultsPaginationDTO } from 'src/dto/api.dto';
 import { RoleEnum } from 'src/entities/roles.entity';
 import { UtilsService } from 'src/utils/utils.service';
 import { ReportsService } from './reports.service';
@@ -48,10 +48,10 @@ export class ReportsController extends DefaultController {
   @Auth(RoleEnum.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get user report' })
-  @ApiResponse({ type: ResponseDataDTO, status: HttpStatus.OK })
-  async moreAnswered(): Promise<ResponseDataDTO> {
+  @ApiResponse({ type: ResposeResultsPaginationDTO, status: HttpStatus.OK })
+  async moreAnswered(@Query() query: PaginationDTO): Promise<ResposeResultsPaginationDTO> {
     try {
-      return await this.reportService.moreAnswered();
+      return await this.reportService.moreAnswered({ query: query });
     } catch (error) {
       this.utilsService.throwHTTPException({ controller: ReportsController, error: error });
     }

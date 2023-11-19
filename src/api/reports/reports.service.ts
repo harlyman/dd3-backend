@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DefaultService } from 'src/defaults/defatul.service';
-import { ResponseDataDTO } from 'src/dto/api.dto';
+import { PaginationDTO, ResponseDataDTO, ResposeResultsPaginationDTO } from 'src/dto/api.dto';
 import { ChallengeUserEntity } from 'src/entities/challengeUser.entity';
 import { RoleEntity } from 'src/entities/roles.entity';
 import { UserEntity } from 'src/entities/users.entity';
@@ -100,7 +100,10 @@ export class ReportsService extends DefaultService {
     return { status: 'success', data: result };
   }
 
-  async moreAnswered(): Promise<ResponseDataDTO> {
+  async moreAnswered(params: { query: PaginationDTO }): Promise<ResposeResultsPaginationDTO> {
+    const forPage: number = parseInt(params.query.pageSize);
+    const skip: number = parseInt(params.query.offset); // from where entities should be taken.
+
     const subqueryA = this.challengeUserRepository
       .createQueryBuilder('cu')
       .select('w.guid', 'guid')
@@ -110,26 +113,15 @@ export class ReportsService extends DefaultService {
       .where('cu.victory = true')
       .getQuery();
 
-    const rows = await this.wordRepository
+    const [results, total] = await this.wordRepository
       .createQueryBuilder('word')
       .select(WordEntity.getColumnsArrayToShow({ alias: 'word' }))
-      .addSelect('SUM(a.amount)', 'amount')
       .innerJoin(`(${subqueryA})`, 'a', 'word.guid = a.guid')
       .groupBy('word.guid')
-      .orderBy('SUM(a.amount)', 'DESC')
-      .getRawMany();
+      .skip(skip)
+      .take(forPage)
+      .getManyAndCount();
 
-    const result = [];
-    rows.forEach((row) => {
-      result.push({
-        guid: row.word_guid,
-        word: row.word_word,
-        createdAt: row.word_createdAt,
-        usedAt: row.word_usedAt,
-        amount: row.amount
-      });
-    });
-
-    return { status: 'success', data: result };
+    return { total: total, pageSize: forPage, offset: parseInt(params.query.offset), results: results };
   }
 }
